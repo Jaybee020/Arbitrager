@@ -28,7 +28,7 @@ const arbitrageWorker = new Worker("Arbitrage", async (job) => {
   await daiAllowance();
   await wethAllowance();
   console.log(`New block received. Block # ${job.data.blockNumber}`);
-  const AMOUNT_DAI = "5";
+  const AMOUNT_DAI = String(process.env.AMOUNT_DAI);
   const MIN_PROFIT = Number(process.env.MIN_PROFIT);
   const AMOUNT_DAI_WEI = parseEther(AMOUNT_DAI);
   const RECENT_ETH_PRICE_FROM_BINANCE = Math.round(

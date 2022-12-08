@@ -9,9 +9,10 @@
 Set up a local .env file that contains the following configuration variables
 
 ```
-PROVIDER_URL="POLYGON URL"
-PRIVATE_KEY="YOUR PRIVATE KEY"
-MIN_PROFIT="YOUR MIN PROFIT IN DOLLARS
+PROVIDER_URL=<POLYGON URL>
+PRIVATE_KEY=<YOUR PRIVATE KEY>
+MIN_PROFIT=<YOUR MIN PROFIT IN DOLLARS>
+AMOUNT_DAI=<AMOUNT OF DAI TO TRADE>
 ```
 
 ### Giving allowances to the contract
