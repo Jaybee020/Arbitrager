@@ -1,6 +1,6 @@
 # profitable_flashloans
 
-## Arbitrage bot setup to search for arbitrage opportunities using the pair ETH/DAI in the Uniswap & Kyber DEXes
+## Arbitrage bot setup to search for arbitrage opportunities using the pair ETH/DAI in the Sushiswap & Meshswap DEXes
 
 - This version of the bot only works for the ETH/DAI pair and only listens for arbitrage on Sushiswap and Meshswap.
 
