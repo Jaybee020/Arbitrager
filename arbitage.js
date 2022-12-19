@@ -25,8 +25,6 @@ arbitrageEvent.on("failed", ({ jobId, failedReason }) => {
 });
 
 const arbitrageWorker = new Worker("Arbitrage", async (job) => {
-  await daiAllowance();
-  await wethAllowance();
   console.log(`New block received. Block # ${job.data.blockNumber}`);
   const AMOUNT_DAI = String(process.env.AMOUNT_DAI);
   const MIN_PROFIT = Number(process.env.MIN_PROFIT);
@@ -44,9 +42,9 @@ const arbitrageWorker = new Worker("Arbitrage", async (job) => {
 
   const [DAIfromSushi, DAIfromMesh] = await Promise.all([
     //amount of dai you will get from selling mesh weth on sushi
-    DAIOutFromETHSushi(WethfromMesh, [DAIAddress, WETHAddress]),
+    DAIOutFromETHSushi(WethfromMesh, [WETHAddress, DAIAddress]),
     //amount of dai you will get from selling sushi eth on mesh
-    DAIOutFromETHMesh(WethfromSushi, [DAIAddress, WETHAddress]),
+    DAIOutFromETHMesh(WethfromSushi, [WETHAddress, DAIAddress]),
   ]);
 
   console.log(WethfromMesh, WethfromSushi, DAIfromMesh, DAIfromSushi);
@@ -76,10 +74,10 @@ const arbitrageWorker = new Worker("Arbitrage", async (job) => {
       Number(formatEther(gasCost.mul(gasPrice))) *
       RECENT_ETH_PRICE_FROM_BINANCE;
     console.log(`Estimated txCost is ${txCost}`);
+    console.log("Expected Profit :", profit);
     const profit = Number(DAIfromSushi) - Number(AMOUNT_DAI) - txCost;
     if (profit > MIN_PROFIT) {
       console.log("Arb opportunity found MeshSwap -> Sushiswap");
-      console.log("Expected Profit :", profit);
       const tx = await arbitragerContract.initiateSwap(
         AMOUNT_DAI_WEI,
         DIRECTION.MeshswapToSushiswap,
@@ -111,9 +109,9 @@ const arbitrageWorker = new Worker("Arbitrage", async (job) => {
       RECENT_ETH_PRICE_FROM_BINANCE;
     console.log(`Estimated txCost is ${txCost}`);
     const profit = Number(DAIfromMesh) - Number(AMOUNT_DAI) - txCost;
+    console.log("Expected Profit :", profit);
     if (profit > MIN_PROFIT) {
       console.log("Arb opportunity found Sushiswap -> Meshswap");
-      console.log("Expected Profit :", profit);
       const tx = await arbitragerContract.initiateSwap(
         AMOUNT_DAI_WEI,
         DIRECTION.SushiswapToMeshswap,
@@ -172,7 +170,10 @@ const arbitragerContract = new Contract(
   wallet
 );
 
-const gastoUse = 70e9;
+var gastoUse = 250e9;
+(async () => {
+  gastoUse = (await provider.getFeeData()).maxFeePerGas;
+})();
 const DIRECTION = {
   MeshswapToSushiswap: 0, // -> Buy ETH on Kyber, Sell it on Uniswap
   SushiswapToMeshswap: 1, // -> But ETH on Uniswap, Sell in on Kyber
@@ -192,7 +193,7 @@ async function EthOutFromDAISushi(amountIn, addresses) {
 }
 
 async function DAIOutFromETHSushi(amountIn, addresses) {
-  const data = await sushiswapRouter.getAmountsIn(
+  const data = await sushiswapRouter.getAmountsOut(
     parseEther(amountIn.toString()),
     addresses,
     {
@@ -201,7 +202,7 @@ async function DAIOutFromETHSushi(amountIn, addresses) {
     }
   );
   const expectedEth = data.map((val) => formatEther(val));
-  return expectedEth[0];
+  return expectedEth[1];
 }
 
 async function EthOutFromDAIMesh(amountIn, addresses) {
@@ -218,7 +219,7 @@ async function EthOutFromDAIMesh(amountIn, addresses) {
 }
 
 async function DAIOutFromETHMesh(amountIn, addresses) {
-  const data = await meshSwapRouter.getAmountsIn(
+  const data = await meshSwapRouter.getAmountsOut(
     parseEther(amountIn.toString()),
     addresses,
     {
@@ -227,7 +228,7 @@ async function DAIOutFromETHMesh(amountIn, addresses) {
     }
   );
   const expectedEth = data.map((val) => formatEther(val));
-  return expectedEth[0];
+  return expectedEth[1];
 }
 
 async function wethAllowance() {
